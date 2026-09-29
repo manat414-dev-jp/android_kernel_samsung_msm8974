@@ -927,6 +927,10 @@ static struct sec_jack_platform_data *sec_jack_populate_dt_pdata(struct device *
 
 	if (of_find_property(dev->of_node, "qcom,send-end-active-high", NULL))
 		pdata->send_end_active_high = true;
+	if (of_find_property(dev->of_node, "qcom,detect-active-high", NULL))
+		pdata->det_active_high = true;
+	else
+		pdata->det_active_high = true;
 		
 	ret = of_property_read_u32_array(dev->of_node, "mpp-channel-scaling", pdata->mpp_ch_scale, 3);
 	if (ret < 0) {
@@ -1152,6 +1156,8 @@ static int sec_jack_probe(struct platform_device *pdev)
 #if defined(CONFIG_MACH_VIENNA) || defined(CONFIG_MACH_PICASSO) || defined(CONFIG_MACH_MONDRIAN) || defined(CONFIG_MACH_LT03) || defined(CONFIG_SEC_H_PROJECT) || defined(CONFIG_SEC_FRESCO_PROJECT)
 	mpp_control(0);
 #endif
+
+	schedule_work(&hi->detect_work);
 
 	return 0;
 

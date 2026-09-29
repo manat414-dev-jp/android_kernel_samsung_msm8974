@@ -1891,10 +1891,9 @@ static int max77804k_muic_handle_attach(struct max77804k_muic_info *info,
 		case CHGTYP_500MA:
 		case CHGTYP_1A:
 		case CHGTYP_SPECIAL_CHGR:
+		default:
 			new_state = BIT(EXTCON_TA);
 			info->cable_name = EXTCON_TA;
-			break;
-		default:
 			break;
 		}
 		break;

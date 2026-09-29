@@ -763,7 +763,22 @@ static bool sec_bat_ovp_uvlo_result(
 #endif
 			break;
 		case POWER_SUPPLY_HEALTH_OVERVOLTAGE:
+			dev_info(battery->dev,
+				"%s: Unsafe overvoltage (%d)\n",
+				__func__, health);
+			sec_bat_set_charging_status(battery,
+				POWER_SUPPLY_STATUS_NOT_CHARGING);
+			sec_bat_set_charge(battery, false);
+			battery->charging_mode = SEC_BATTERY_CHARGING_NONE;
+			battery->is_recharging = false;
+			wake_lock_timeout(&battery->vbus_wake_lock, HZ * 10);
+			break;
 		case POWER_SUPPLY_HEALTH_UNDERVOLTAGE:
+			dev_info(battery->dev,
+				"%s: Undervoltage detected, keeping charging\n",
+				__func__);
+			break;
+		case 99999:
 			dev_info(battery->dev,
 				"%s: Unsafe voltage (%d)\n",
 				__func__, health);
@@ -4097,8 +4112,7 @@ static int sec_usb_get_property(struct power_supply *psy,
 #endif
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
-		if ((battery->health == POWER_SUPPLY_HEALTH_OVERVOLTAGE) ||
-				(battery->health == POWER_SUPPLY_HEALTH_UNDERVOLTAGE)) {
+		if (battery->health == POWER_SUPPLY_HEALTH_OVERVOLTAGE) {
 			val->intval = 0;
 			return 0;
 		}
@@ -4148,8 +4162,7 @@ static int sec_ac_get_property(struct power_supply *psy,
 	if (psp != POWER_SUPPLY_PROP_ONLINE)
 		return -EINVAL;
 
-	if ((battery->health == POWER_SUPPLY_HEALTH_OVERVOLTAGE) ||
-		(battery->health == POWER_SUPPLY_HEALTH_UNDERVOLTAGE)) {
+	if (battery->health == POWER_SUPPLY_HEALTH_OVERVOLTAGE) {
 			val->intval = 0;
 			return 0;
 	}
@@ -4840,44 +4853,64 @@ static int sec_bat_parse_dt(struct device *dev,
 #if defined(CONFIG_BATTERY_SWELLING)
 	ret = of_property_read_u32(np, "battery,chg_float_voltage",
 			(unsigned int *)&pdata->swelling_normal_float_voltage);
-	if (ret)
-		pr_info("%s: chg_float_voltage is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: chg_float_voltage is Empty, Default 4400\n", __func__);
+		pdata->swelling_normal_float_voltage = 4400;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_high_temp_block",
 			&temp);
-	pdata->swelling_high_temp_block = (int)temp;
-	if (ret)
-		pr_info("%s: swelling high temp block is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: swelling high temp block is Empty, Default 500\n", __func__);
+		pdata->swelling_high_temp_block = 500;
+	} else {
+		pdata->swelling_high_temp_block = (int)temp;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_high_temp_recov",
 			&temp);
-	pdata->swelling_high_temp_recov = (int)temp;
-	if (ret)
-		pr_info("%s: swelling high temp recovery is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: swelling high temp recovery is Empty, Default 450\n", __func__);
+		pdata->swelling_high_temp_recov = 450;
+	} else {
+		pdata->swelling_high_temp_recov = (int)temp;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_low_temp_block_1st",
 			&temp);
-	pdata->swelling_low_temp_block_1st = (int)temp;
-	if (ret)
-		pr_info("%s: swelling low temp block is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: swelling low temp block 1st is Empty, Default 100\n", __func__);
+		pdata->swelling_low_temp_block_1st = 100;
+	} else {
+		pdata->swelling_low_temp_block_1st = (int)temp;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_low_temp_recov_1st",
 			&temp);
-	pdata->swelling_low_temp_recov_1st = (int)temp;
-	if (ret)
-		pr_info("%s: swelling low temp recovery is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: swelling low temp recovery 1st is Empty, Default 150\n", __func__);
+		pdata->swelling_low_temp_recov_1st = 150;
+	} else {
+		pdata->swelling_low_temp_recov_1st = (int)temp;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_low_temp_block_2nd",
 			&temp);
-	pdata->swelling_low_temp_block_2nd = (int)temp;
-	if (ret)
-		pr_info("%s: swelling low temp block is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: swelling low temp block 2nd is Empty, Default 50\n", __func__);
+		pdata->swelling_low_temp_block_2nd = 50;
+	} else {
+		pdata->swelling_low_temp_block_2nd = (int)temp;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_low_temp_recov_2nd",
 			&temp);
-	pdata->swelling_low_temp_recov_2nd = (int)temp;
-	if (ret)
-		pr_info("%s: swelling low temp recovery is Empty\n", __func__);
+	if (ret) {
+		pr_info("%s: swelling low temp recovery 2nd is Empty, Default 100\n", __func__);
+		pdata->swelling_low_temp_recov_2nd = 100;
+	} else {
+		pdata->swelling_low_temp_recov_2nd = (int)temp;
+	}
 
 	ret = of_property_read_u32(np, "battery,swelling_low_temp_current", 
 			&pdata->swelling_low_temp_current);

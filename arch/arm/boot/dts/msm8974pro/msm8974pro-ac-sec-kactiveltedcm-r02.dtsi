@@ -471,6 +471,7 @@
 		qcom,earjack-micbias-gpio = <&msmgpio 0 0>;
 		qcom,earjack-sendend-gpio = <&msmgpio 77 0>;
 		qcom,send-end-active-high;
+		qcom,detect-active-high;
 		det-zones-list = <&det_zones 3 10000 10 2>,
 						 <&det_zones 930 10000 10 2>,
 						 <&det_zones 2380 10000 10 1>,
@@ -507,8 +508,8 @@
 		battery,monitor_initial_count = <3>;
 
 		battery,battery_check_type = <1>; /* SEC_BATTERY_CHECK_ADC */
-		battery,check_count = <0>;
-		battery,check_adc_max = <1440>;
+		battery,check_count = <5>;
+		battery,check_adc_max = <2100>;
 		battery,check_adc_min = <0>;
 
 		battery,ovp_uvlo_check_type = <3>; /* SEC_BATTERY_OVP_UVLO_CHGPOLLING */
@@ -551,6 +552,27 @@
 		battery,recharging_total_time = <5400>;
 		battery,charging_reset_time = <0>;
 
+		battery,swelling_high_temp_block = <500>;
+		battery,swelling_high_temp_recov = <450>;
+		battery,swelling_low_temp_block_1st = <100>;
+		battery,swelling_low_temp_recov_1st = <150>;
+		battery,swelling_low_temp_block_2nd = <50>;
+		battery,swelling_low_temp_recov_2nd = <100>;
+
+		battery,swelling_low_temp_current = <700>;
+		battery,swelling_low_temp_topoff = <150>;
+		battery,swelling_high_temp_current = <1200>;
+		battery,swelling_high_temp_topoff = <150>;
+		battery,swelling_wc_high_temp_current = <700>;
+		battery,swelling_wc_low_temp_current = <700>;
+
+		battery,swelling_drop_float_voltage = <4200>;
+		battery,swelling_high_rechg_voltage = <4150>;
+		battery,swelling_low_rechg_voltage = <4050>;
+
+		battery,expired_time = <21600>;
+		battery,recharging_expired_time = <5400>;
+
 		charger{
 			status = "disable";
 			/* Charger */
@@ -572,8 +594,8 @@
 			battery,full_check_type = <7>; /* SEC_BATTERY_FULLCHARGED_CHGPSY */
 			battery,full_check_type_2nd = <3>; /*SEC_BATTERY_FULLCHARGED_TIME */
 
-			battery,input_current_limit = <1800 460 460 1800 460 900 1000 460 460 1000 650 1800 1800 460 1300 400 700 1300 300 1000 1800 460 1800 1800 460>;
-			battery,fast_charging_current = <1800 0 460 2300 460 1200 1000 460 0 1200 750 2100 2100 0 1300 400 700 1300 300 1000 2100 0 2800 2800 0>;
+			battery,input_current_limit = <1800 460 460 1800 1800 1800 1800 1000 460 1000 650 1800 1800 460 1300 400 700 1300 300 1000 1800 460 1800 1800 460>;
+			battery,fast_charging_current = <1800 0 460 2300 2100 2100 2100 1000 0 1200 750 2100 2100 0 1300 400 700 1300 300 1000 2100 0 2800 2800 0>;
 			battery,full_check_current_1st = <200 0 200 200 200 200 200 200 200 0 200 200 200 200 0 200 200 200 200 200 200 200 200 200 0>;
 			battery,full_check_current_2nd = <2400 0 2400 2400 2400 2400 2400 2400 0 2400 2400 2400 2400 0 2400 2400 2400 2400 2400 2400 2400 0 2400 2400 0>;
 		};

@@ -590,7 +590,8 @@ static void max77804k_recovery_work(struct work_struct *work)
 
 	wake_unlock(&chg_data->recovery_wake_lock);
 	if ((!chg_data->is_charging) || mutex_is_locked(&chg_data->ops_lock) ||
-			(chg_data->cable_type != POWER_SUPPLY_TYPE_MAINS))
+			(chg_data->cable_type == POWER_SUPPLY_TYPE_WIRELESS) ||
+			(chg_data->cable_type == POWER_SUPPLY_TYPE_BATTERY))
 		return;
 	max77804k_read_reg(chg_data->max77804k->i2c,
 				MAX77804K_CHG_REG_CHG_DTLS_00, &dtls_00);
@@ -610,8 +611,7 @@ static void max77804k_recovery_work(struct work_struct *work)
 		(chgin_dtls == 0x3) && (chg_dtls != 0x8) && (byp_dtls == 0x0))) {
 		pr_info("%s: try to recovery, cnt(%d)\n", __func__,
 				(chg_data->soft_reg_recovery_cnt + 1));
-		if (chg_data->siop_level < 100 &&
-			chg_data->cable_type == POWER_SUPPLY_TYPE_MAINS) {
+		if (chg_data->siop_level < 100) {
 			pr_info("%s : LCD on status and recover current\n", __func__);
 			max77804k_set_input_current(chg_data,
 					SIOP_INPUT_LIMIT_CURRENT);
@@ -670,7 +670,8 @@ static void reduce_input_current(struct max77804k_charger_data *charger, int cur
 		pr_info("%s: set current: reg:(0x%x), val:(0x%x)\n",
 				__func__, set_reg, set_value);
 	}
-	if(charger->cable_type == POWER_SUPPLY_TYPE_MAINS) {
+	if (charger->cable_type != POWER_SUPPLY_TYPE_WIRELESS &&
+	    charger->cable_type != POWER_SUPPLY_TYPE_BATTERY) {
 		/* schedule softreg recovery wq */
 		cancel_delayed_work_sync(&charger->recovery_work);
 		wake_lock(&charger->recovery_wake_lock);
@@ -798,7 +799,7 @@ static int max77804k_get_health_state(struct max77804k_charger_data *charger)
 	case 0x00:
 		pr_info("%s: No battery and the charger is suspended\n",
 			__func__);
-		state = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+		{ union power_supply_propval val = {0,}; psy_do_property("battery", get, POWER_SUPPLY_PROP_PRESENT, val); state = val.intval ? POWER_SUPPLY_HEALTH_GOOD : POWER_SUPPLY_HEALTH_UNSPEC_FAILURE; }
 		break;
 	case 0x01:
 		pr_info("%s: battery is okay "
@@ -886,7 +887,7 @@ static int max77804k_get_health_state(struct max77804k_charger_data *charger)
 				(chg_cnfg_00 & MAX77804K_MODE_CHGR) && \
 				(charger->cable_type != POWER_SUPPLY_TYPE_WIRELESS)) {
 			pr_info("%s: vbus is under\n", __func__);
-			state = POWER_SUPPLY_HEALTH_UNDERVOLTAGE;
+			state = POWER_SUPPLY_HEALTH_GOOD;
 		} else if((value.intval == POWER_SUPPLY_HEALTH_UNDERVOLTAGE) && \
 				!((vbus_state == 0x0) || (vbus_state == 0x01))){
 			max77804k_set_input_current(charger,
